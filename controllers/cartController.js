@@ -1,39 +1,58 @@
-// This is a fake in-memory database -> data lost once restarted
-let cart = [];
+const Cart = require("../models/Cart");
 
-exports.getCart = (req, res) => {
-    res.json(cart);
-};
+exports.getCart = async (req, res, next) => {
+    try {
+        const cart = await Cart.find()
+            .populate("userId")
+            .populate("productId");
 
-exports.addToCart = (req, res) => {
-    const newItem = {
-        id: cart.length + 1,
-        userId: req.body.userId,
-        productId: req.body.productId,
-        quantity: req.body.quantity
-    };
-
-    cart.push(newItem);
-    res.status(201).json(newItem);
-};
-
-exports.updateCartItem = (req, res, next) => {
-    const id = parseInt(req.params.id);
-    const item = cart.find(c => c.id === id);
-
-    if (!item) {
-        const error = new Error("Cart item not found");
-        error.status = 404;
-        return next(error);
+        res.json(cart);
+    } 
+    catch (error) {
+        next(error);
     }
-
-    item.quantity = req.body.quantity;
-    res.json(item);
 };
 
-exports.deleteCartItem = (req, res) => {
-    const id = parseInt(req.params.id);
-    cart = cart.filter(c => c.id !== id);
+exports.addToCart = async (req, res, next) => {
+    try {
+        const item = await Cart.create(req.body);
+        res.status(201).json(item);
+    } 
+    catch (error) {
+        next(error);
+    }
+};
 
-    res.json({ message: "Cart item removed" });
+exports.updateCartItem = async (req, res, next) => {
+    try {
+        const item = await Cart.findByIdAndUpdate(
+            req.params.id,
+            { quantity: req.body.quantity },
+            { new: true }
+        );
+
+        if (!item) {
+            return res.status(404).json({ message: "Cart item not found" });
+        }
+
+        res.json(item);
+    } 
+    catch (error) {
+        next(error);
+    }
+};
+
+exports.deleteCartItem = async (req, res, next) => {
+    try {
+        const item = await Cart.findByIdAndDelete(req.params.id);
+
+        if (!item) {
+            return res.status(404).json({ message: "Cart item not found" });
+        }
+
+        res.json({ message: "Cart item removed" });
+    } 
+    catch (error) {
+        next(error);
+    }
 };

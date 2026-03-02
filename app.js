@@ -1,23 +1,32 @@
-const express = require('express');
+const express = require("express");
+const connectDB = require("./config/db");
+
+const productRoutes = require("./routes/productRoutes");
+const userRoutes = require("./routes/userRoutes");
+const cartRoutes = require("./routes/cartRoutes");
+const orderRoutes = require("./routes/orderRoutes");
+
+const errorHandler = require("./middleware/errorHandler");
+
 const app = express();
 
+// Connect Database
+connectDB();
+
+// Middleware
 app.use(express.json());
 
 // Routes
-const productRoutes = require('./routes/productRoutes');
-const userRoutes = require('./routes/userRoutes');
-const cartRoutes = require('./routes/cartRoutes');
-const orderRoutes = require('./routes/orderRoutes');
+app.use("/api/products", productRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
 
-app.use('/products', productRoutes);
-app.use('/users', userRoutes);
-app.use('/cart', cartRoutes);
-app.use('/orders', orderRoutes);
-
-// Global Error Handler
-const errorHandler = require('./middleware/errorHandler');
+// Global Error Handler (must be at last)
 app.use(errorHandler);
 
-app.listen(3000, () => {
-    console.log('Server running on port 3000');
+// Server
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });

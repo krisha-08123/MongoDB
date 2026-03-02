@@ -1,38 +1,55 @@
-// This is a fake in-memory database.
-let orders = [];
+const Order = require("../models/Order");
 
-exports.getAllOrders = (req, res) => {
-    res.json(orders);
-};
+exports.getAllOrders = async (req, res, next) => {
+    try {
+        const orders = await Order.find()
+            .populate("userId")
+            .populate("items.productId");
 
-exports.getOrderById = (req, res, next) => {
-    const id = parseInt(req.params.id);
-    const order = orders.find(o => o.id === id);
-
-    if (!order) {
-        const error = new Error("Order not found");
-        error.status = 404;
-        return next(error);
+        res.json(orders);
+    } 
+    catch (error) {
+        next(error);
     }
-
-    res.json(order);
 };
 
-exports.createOrder = (req, res) => {
-    const newOrder = {
-        id: orders.length + 1,
-        userId: req.body.userId,
-        items: req.body.items,
-        totalAmount: req.body.totalAmount
-    };
+exports.getOrderById = async (req, res, next) => {
+    try {
+        const order = await Order.findById(req.params.id)
+            .populate("userId")
+            .populate("items.productId");
 
-    orders.push(newOrder);
-    res.status(201).json(newOrder);
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        res.json(order);
+    } 
+    catch (error) {
+        next(error);
+    }
 };
 
-exports.deleteOrder = (req, res) => {
-    const id = parseInt(req.params.id);
-    orders = orders.filter(o => o.id !== id);
+exports.createOrder = async (req, res, next) => {
+    try {
+        const order = await Order.create(req.body);
+        res.status(201).json(order);
+    } 
+    catch (error) {
+        next(error);
+    }
+};
 
-    res.json({ message: "Order deleted" });
+exports.deleteOrder = async (req, res, next) => {
+    try {
+        const order = await Order.findByIdAndDelete(req.params.id);
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        res.json({ message: "Order deleted" });
+    } 
+    catch (error) {
+        next(error);
+    }
 };
